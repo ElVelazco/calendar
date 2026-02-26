@@ -1,0 +1,112 @@
+[
+  {
+    "fecha_estimada": "2026-02-03",
+    "accion": "bla bla bla bla",
+    "descripcion_breve": "bla bla bli,bli",
+    "descripcion_actividad": "fdadfaasdffasdgasdgasgasfgasfg",
+    "autoridades": "tout le monde",
+    "materiales": "cosas",
+    "coordinaciones": "pim pam pum pim pam",
+    "fuente_datos": "Departamento Administrativo",
+    "timestamp": "2026-02-03T12:02:46.075694"
+  },
+  {
+    "fecha_estimada": "2026-02-03",
+    "accion": "assdfaDF",
+    "descripcion_breve": "ADFDF",
+    "descripcion_actividad": "daDFAdfaDFAdf",
+    "autoridades": "aDFAdf",
+    "materiales": "fdaDFAdfaDF",
+    "coordinaciones": "AdfaDdfaDFAdfaDF",
+    "fuente_datos": "DINAVI-BPS",
+    "timestamp": "2026-02-03T13:26:39.694175"
+  },
+  {
+    "fecha_estimada": "2026-02-03",
+    "accion": "EFefqER",
+    "descripcion_breve": "QERQerrqEQER",
+    "descripcion_actividad": "QerqERQerqER",
+    "autoridades": "qerqERR",
+    "materiales": "QerqER",
+    "coordinaciones": "QERqERQerQER",
+    "fuente_datos": "BHU",
+    "timestamp": "2026-02-03T13:26:50.019753"
+  },
+  {
+    "fecha_estimada": "2026-02-03",
+    "accion": "QERQERQERQER",
+    "descripcion_breve": "QERQERQER",
+    "descripcion_actividad": "ETERQERQERRQE",
+    "autoridades": "QERQERQER",
+    "materiales": "ERQERQER",
+    "coordinaciones": "QERQER",
+    "fuente_datos": "INSTITUCIONALES",
+    "timestamp": "2026-02-03T13:27:00.572124"
+  },
+  {
+    "fecha_estimada": "2026-02-03",
+    "accion": "z<cvz<cvz<cv",
+    "descripcion_breve": "xzxc<xcv",
+    "descripcion_actividad": "zc<vz<cvz<cv",
+    "autoridades": "z<cv<cvzz<cv",
+    "materiales": "z<cvcvz<cv",
+    "coordinaciones": "<cvz<cvz<cvz<cv",
+    "fuente_datos": "DINAVI-BPS",
+    "timestamp": "2026-02-03T15:13:56.463523"
+  },
+  {
+    "fecha_estimada": "2026-02-03",
+    "accion": "z<cvz<cv",
+    "descripcion_breve": "vz<v<cv<cz",
+    "descripcion_actividad": "vv<cz<cv",
+    "autoridades": "<cvv<c",
+    "materiales": "cz<v<c<cv",
+    "coordinaciones": "z<cvvz<cv<c<cvzvcz<cvz<cvz<cv",
+    "fuente_datos": "DGS",
+    "timestamp": "2026-02-03T15:14:09.636751"
+  },
+  {
+    "fecha_estimada": "2026-02-03",
+    "accion": "cvfasdfasd",
+    "descripcion_breve": "fasdfasdfasdf",
+    "descripcion_actividad": "faDFADfadFAdfaDF",
+    "autoridades": "AdfdAF",
+    "materiales": "FDdaf",
+    "coordinaciones": "fadfdfadfaDFDDA",
+    "fuente_datos": "DINOT",
+    "timestamp": "2026-02-03T15:14:23.893133"
+  },
+  {
+    "fecha_estimada": "2026-02-03",
+    "accion": "XVZZX",
+    "descripcion_breve": "BXBVX",
+    "descripcion_actividad": "BB",
+    "autoridades": "ZXVBXV",
+    "materiales": "XVZB",
+    "coordinaciones": "XVBXVB",
+    "fuente_datos": "MEVIR",
+    "timestamp": "2026-02-03T15:14:48.581578"
+  },
+  {
+    "fecha_estimada": "2026-02-07",
+    "accion": "DAFADF",
+    "descripcion_breve": "AdfaD",
+    "descripcion_actividad": "ADFFADf",
+    "autoridades": "aDFAdf",
+    "materiales": "aDFAdf",
+    "coordinaciones": "adFAdfaDFAdf",
+    "fuente_datos": "MEVIR",
+    "timestamp": "2026-02-03T15:15:03.909814"
+  },
+  {
+    "fecha_estimada": "2026-02-24",
+    "accion": "dasdASD",
+    "descripcion_breve": "DasSD",
+    "descripcion_actividad": "asasdASDasd",
+    "autoridades": "asdASDDasdASD",
+    "materiales": "ASDasdAS",
+    "coordinaciones": "ASDasdQASDDf",
+    "fuente_datos": "DINAVI-BPS",
+    "timestamp": "2026-02-24T15:59:24.350497"
+  }
+]
