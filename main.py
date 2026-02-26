@@ -4,6 +4,12 @@ from datetime import datetime, timedelta
 import csv, json
 from pathlib import Path
 import calendar
+import shutil
+
+# ---------------------------------------------------------------------------
+# configuration constants
+DEFAULT_DATE_FORMAT = "%Y-%m-%d"
+# ---------------------------------------------------------------------------
 
 try:
     import xlwt
@@ -32,6 +38,7 @@ class CalendarApp:
         # Notebook tab style
         style.configure('TNotebook.Tab', font=('Segoe UI', 10, 'bold'), padding=[12, 8])
         self.events = []
+        self._sorted_cache = None  # cache for sorted event indices
         self.data_file = Path("calendar_data.json")
         self.current_date = datetime.now()
         self.load_data()
@@ -90,6 +97,24 @@ class CalendarApp:
         self.setup_manage_tab()
         self.setup_export_tab()
     
+    # ---------------------------------------------------------------------
+    # utility helpers
+    def _valid_color(self, c):
+        """Return True if ``c`` is a #RRGGBB hex string."""
+        return isinstance(c, str) and len(c) == 7 and c.startswith("#")
+
+    def get_sorted_indices(self):
+        """Return indices sorted by fecha_estimada, caching result."""
+        if self._sorted_cache is None:
+            self._sorted_cache = sorted(
+                range(len(self.events)),
+                key=lambda i: self.events[i].get("fecha_estimada", ""),
+            )
+        return self._sorted_cache
+
+    def invalidate_sorted_cache(self):
+        self._sorted_cache = None
+
     def setup_forms_tab(self):
         forms_container = ttk.Frame(self.forms_frame, padding="15")
         forms_container.pack(fill=tk.BOTH, expand=True)
@@ -107,7 +132,7 @@ class CalendarApp:
             ttk.Label(frame, text=label, width=35).pack(side=tk.LEFT, padx=5)
             if key == "fecha_estimada":
                 entry = ttk.Entry(frame, width=30)
-                entry.insert(0, datetime.now().strftime("%Y-%m-%d"))
+                entry.insert(0, datetime.now().strftime(DEFAULT_DATE_FORMAT))
             elif key in ["descripcion_actividad", "coordinaciones"]:
                 entry = tk.Text(frame, height=3, width=50)
             else:
@@ -160,6 +185,8 @@ class CalendarApp:
         
         # configure Treeview tags for source colors
         for src, color in self.source_colors.items():
+            if not self._valid_color(color):
+                continue
             try:
                 # tag names without spaces
                 tag = f"src_{src}"
@@ -244,6 +271,8 @@ class CalendarApp:
         
         # configure tags for manage_tree as well
         for src, color in self.source_colors.items():
+            if not self._valid_color(color):
+                continue
             try:
                 tag = f"src_{src}"
                 self.manage_tree.tag_configure(tag, background=color)
@@ -274,7 +303,7 @@ class CalendarApp:
     def save_event(self):
         try:
             f = self.get_field_value("fecha_estimada")
-            datetime.strptime(f, "%Y-%m-%d")
+            datetime.strptime(f, DEFAULT_DATE_FORMAT)
             a = self.get_field_value("accion")
             if not a or not self.get_field_value("descripcion_breve"):
                 messagebox.showwarning("Validación", "Ingrese Acción y Descripción")
@@ -283,6 +312,7 @@ class CalendarApp:
             ev["fuente_datos"] = self.source_var.get()
             ev["timestamp"] = datetime.now().isoformat()
             self.events.append(ev)
+            self.invalidate_sorted_cache()
             self.save_data()
             self.refresh_calendar()
             self.refresh_weekly()
@@ -300,14 +330,18 @@ class CalendarApp:
         return f.get("1.0", tk.END).strip() if isinstance(f, tk.Text) else f.get().strip()
     
     def clear_form(self):
-        self.form_fields["fecha_estimada"].delete(0, tk.END)
-        self.form_fields["fecha_estimada"].insert(0, datetime.now().strftime("%Y-%m-%d"))
-        for k, f in self.form_fields.items():
-            if k != "fecha_estimada":
-                if isinstance(f, tk.Text):
-                    f.delete("1.0", tk.END)
-                else:
-                    f.delete(0, tk.END)
+        try:
+            self.form_fields["fecha_estimada"].delete(0, tk.END)
+            self.form_fields["fecha_estimada"].insert(0, datetime.now().strftime(DEFAULT_DATE_FORMAT))
+            for k, f in self.form_fields.items():
+                if k != "fecha_estimada":
+                    if isinstance(f, tk.Text):
+                        f.delete("1.0", tk.END)
+                    else:
+                        f.delete(0, tk.END)
+        except Exception as e:
+            # log or show error but don't crash
+            messagebox.showerror("Error", f"Error limpiando formulario: {e}")
     
     def refresh_calendar(self):
         for i in self.tree.get_children():
@@ -315,10 +349,10 @@ class CalendarApp:
         st = self.search_var.get().lower()
         fs = self.filter_source_var.get()
         # insert rows with tags referencing the original event index and source for color-coding
-        sorted_indices = sorted(range(len(self.events)), key=lambda i: self.events[i]["fecha_estimada"]) if self.events else []
+        sorted_indices = self.get_sorted_indices()
         for idx in sorted_indices:
             e = self.events[idx]
-            if st and st not in e["accion"].lower() and st not in e["descripcion_breve"].lower():
+            if st and st not in e.get("accion", "").lower() and st not in e.get("descripcion_breve", "").lower():
                 continue
             if fs != "Todas" and e.get("fuente_datos", "") != fs:
                 continue
@@ -326,10 +360,11 @@ class CalendarApp:
             icon = self.source_icons.get(src, '•')
             tag_src = f"src_{src}"
             # idx tag for easy lookup, display action with icon
-            self.tree.insert("", tk.END, values=(e["fecha_estimada"], f"{icon} {e['accion']}", e["descripcion_breve"][:50], src), tags=(f"idx_{idx}", tag_src))
+            self.tree.insert("", tk.END, values=(e.get("fecha_estimada", ""), f"{icon} {e.get('accion', '')}", e.get("descripcion_breve", "")[:50], src), tags=(f"idx_{idx}", tag_src))
     
     def get_events_for_date(self, ds):
-        return [e for e in self.events if e["fecha_estimada"] == ds]
+        # safe access to avoid crashing when field missing
+        return [e for e in self.events if e.get("fecha_estimada", "") == ds]
     
     def prev_week(self):
         self.current_date -= timedelta(days=7)
@@ -358,7 +393,7 @@ class CalendarApp:
         day_frames = []
         for i, dn in enumerate(["Lun", "Mar", "Mié", "Jue", "Vie", "Sab", "Dom"]):
             dd = sw + timedelta(days=i)
-            ds = dd.strftime("%Y-%m-%d")
+            ds = dd.strftime(DEFAULT_DATE_FORMAT)
             
             # Day column with border
             day_col = tk.Frame(main_frame, relief=tk.RIDGE, borderwidth=2, bg='white')
@@ -378,10 +413,12 @@ class CalendarApp:
             if des:
                 for ev in des:
                     color = self.source_colors.get(ev.get('fuente_datos', ''), '#dddddd')
+                    if not self._valid_color(color):
+                        color = '#dddddd'
                     src = ev.get('fuente_datos', '')
                     icon = self.source_icons.get(src, '•')
                     event_label = tk.Label(events_container, 
-                                         text=f"{icon} {ev['accion'][:20]}", 
+                                         text=f"{icon} {ev.get('accion','')[:20]}", 
                                          bg=color, fg='black', anchor='w', padx=6, 
                                          pady=5, font=("Segoe UI", 9), 
                                          wraplength=120, justify=tk.LEFT)
@@ -460,9 +497,11 @@ class CalendarApp:
                     # Display up to 4 events with better spacing
                     for idx, ev in enumerate(des[:4]):
                         color = self.source_colors.get(ev.get('fuente_datos', ''), '#dddddd')
+                        if not self._valid_color(color):
+                            color = '#dddddd'
                         src = ev.get('fuente_datos', '')
                         icon = self.source_icons.get(src, '•')
-                        evt_text = f"{icon} {ev['accion'][:15]}"
+                        evt_text = f"{icon} {ev.get('accion','')[:15]}"
                         evt_label = tk.Label(events_frame, text=evt_text, 
                                            wraplength=110, font=("Segoe UI", 8), 
                                            bg=color, fg='black', anchor='w', padx=3, pady=2)
@@ -489,13 +528,17 @@ class CalendarApp:
             self.manage_tree.insert("", tk.END, values=(e["fecha_estimada"], e["accion"], e["descripcion_breve"][:50], e.get("fuente_datos", "Sin fuente")), tags=(f"idx_{idx}", tag_src))
     
     def show_context_menu(self, e):
-        i = self.tree.selection()
-        if not i:
-            return
-        m = tk.Menu(self.root, tearoff=0)
-        m.add_command(label="Editar", command=self.edit_from_calendar)
-        m.add_command(label="Eliminar", command=self.delete_from_calendar)
-        m.post(e.x_root, e.y_root)
+        try:
+            i = self.tree.selection()
+            if not i:
+                return
+            m = tk.Menu(self.root, tearoff=0)
+            m.add_command(label="Editar", command=self.edit_from_calendar)
+            m.add_command(label="Eliminar", command=self.delete_from_calendar)
+            m.post(e.x_root, e.y_root)
+        except Exception:
+            # ignore context menu errors
+            pass
 
     def on_tree_double_click(self, event):
         sel = self.tree.selection()
@@ -530,13 +573,14 @@ class CalendarApp:
         if not s:
             messagebox.showwarning("Advertencia", "Selecciona un evento")
             return
-        sorted_events = sorted(self.events, key=lambda x: x["fecha_estimada"])
-        ec = 0
-        for idx in range(len(sorted_events)):
-            if ec == int(s[0]):
-                self.open_edit_dialog(idx)
-                return
-            ec += 1
+        # use cached sorted indices to map selection position back to event index
+        sorted_inds = self.get_sorted_indices()
+        try:
+            pos = int(s[0])
+        except ValueError:
+            return
+        if 0 <= pos < len(sorted_inds):
+            self.open_edit_dialog(sorted_inds[pos])
     
     def edit_event(self):
         s = self.manage_tree.selection()
@@ -574,9 +618,10 @@ class CalendarApp:
             efields[key] = entry
         def sc():
             try:
-                datetime.strptime(efields["fecha_estimada"].get(), "%Y-%m-%d")
+                datetime.strptime(efields["fecha_estimada"].get(), DEFAULT_DATE_FORMAT)
                 for k in efields:
                     self.events[eidx][k] = efields[k].get("1.0", tk.END).strip() if isinstance(efields[k], tk.Text) else efields[k].get()
+                self.invalidate_sorted_cache()
                 self.save_data()
                 self.refresh_calendar()
                 self.refresh_weekly()
@@ -597,6 +642,7 @@ class CalendarApp:
             tags = self.manage_tree.item(s[0])['tags']
             if tags:
                 del self.events[int(tags[0])]
+                self.invalidate_sorted_cache()
                 self.save_data()
                 self.refresh_calendar()
                 self.refresh_weekly()
@@ -615,6 +661,7 @@ class CalendarApp:
             for idx in range(len(sorted_events)):
                 if ec == int(s[0]):
                     del self.events[idx]
+                    self.invalidate_sorted_cache()
                     self.save_data()
                     self.refresh_calendar()
                     self.refresh_weekly()
@@ -685,6 +732,14 @@ class CalendarApp:
             messagebox.showerror("Error", str(e))
     
     def save_data(self):
+        # make a backup before overwriting
+        try:
+            if self.data_file.exists():
+                backup = self.data_file.with_suffix(self.data_file.suffix + ".bak")
+                shutil.copy2(self.data_file, backup)
+        except Exception:
+            # ignore backup failure, proceed with save
+            pass
         with open(self.data_file, "w", encoding="utf-8") as f:
             json.dump(self.events, f, ensure_ascii=False, indent=2)
     
